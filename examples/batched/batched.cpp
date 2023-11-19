@@ -20,7 +20,8 @@ int main(int argc, char ** argv) {
 
     // total length of the sequences including the prompt
     int n_len = 32;
-
+    // total length of the sequences excluding the prompt
+    int n_target = 50;
     // number of layers to offload to the GPU
     int n_gpu_layers = 0;
 
@@ -37,7 +38,7 @@ int main(int argc, char ** argv) {
     }
 
     if (argc >= 5) {
-        n_len = std::atoi(argv[4]);
+        n_target = std::atoi(argv[4]);
     }
 
     if (argc >= 6) {
@@ -69,7 +70,8 @@ int main(int argc, char ** argv) {
 
     std::vector<llama_token> tokens_list;
     tokens_list = ::llama_tokenize(model, params.prompt, true);
-    const int n_kv_req = tokens_list.size() + (n_len - tokens_list.size())*n_parallel;
+    n_len = tokens_list.size() + n_target;
+    const int n_kv_req = tokens_list.size() + n_target*n_parallel;
 
     // initialize the context
 
@@ -176,7 +178,7 @@ int main(int argc, char ** argv) {
 
             const int   top_k = 40;
             const float top_p = 0.9f;
-            const float temp  = 0.4f;
+            const float temp  = 0.5f;
 
             llama_sample_top_k(ctx, &candidates_p, top_k, 1);
             llama_sample_top_p(ctx, &candidates_p, top_p, 1);
@@ -233,7 +235,8 @@ int main(int argc, char ** argv) {
         LOG_TEE("\n");
 
         for (int32_t i = 0; i < n_parallel; ++i) {
-            LOG_TEE("sequence %d:\n\n%s%s\n\n", i, params.prompt.c_str(), streams[i].c_str());
+            // LOG_TEE("sequence %d:\n\n%s%s\n\n", i, params.prompt.c_str(), streams[i].c_str());
+            printf("sequence:\n%s\n\n", streams[i].c_str());
         }
     }
 
